@@ -18489,6 +18489,14 @@ async function pullRequestInfo(payload = {}) {
     core.debug("payload.after");
     commit = payload.after;
     core.debug(`commit=${commit}`);
+  } else if (payload.ref) {
+    core.debug("payload.ref");
+    const { data } = await client.rest.git.getRef({
+      ref: payload.ref.slice("refs/".length),
+      ...github.context.repo,
+    });
+    commit = data.object.sha;
+    core.debug(`commit=${commit}`);
   }
 
   core.debug("<< pullRequestInfo");
