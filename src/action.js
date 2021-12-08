@@ -294,6 +294,9 @@ async function listChangedFiles(pullRequestNumber) {
 }
 
 async function pullRequestInfo(payload = {}) {
+  core.debug(">> pullRequestInfo");
+  core.debug(`payload=${JSON.stringify(payload)}`);
+
   let commit = null;
   let pullRequestNumber = core.getInput("pull_request_number", {
     required: false,
@@ -301,15 +304,19 @@ async function pullRequestInfo(payload = {}) {
 
   if (pullRequestNumber) {
     // Use the supplied PR
+    core.debug(`pullRequestNumber=${pullRequestNumber}`);
     pullRequestNumber = parseInt(pullRequestNumber);
     const { data } = await client.rest.pulls.get({
       pull_number: pullRequestNumber,
       ...github.context.repo,
     });
     commit = data.head.sha;
+    core.debug(`commit=${commit}`);
   } else if (payload.workflow_run) {
     // Fetch all open PRs and match the commit hash.
+    core.debug("payload.workflow_run");
     commit = payload.workflow_run.head_commit.id;
+    core.debug(`commit=${commit}`);
     const { data } = await client.rest.pulls.list({
       ...github.context.repo,
       state: "open",
@@ -319,12 +326,18 @@ async function pullRequestInfo(payload = {}) {
       .reduce((n, d) => d.number, "");
   } else if (payload.pull_request) {
     // Try to find the PR from payload
+    core.debug("payload.pull_request");
     const { pull_request: pullRequest } = payload;
     pullRequestNumber = pullRequest.number;
     commit = pullRequest.head.sha;
+    core.debug(`commit=${commit}`);
   } else if (payload.after) {
+    core.debug("payload.after");
     commit = payload.after;
+    core.debug(`commit=${commit}`);
   }
+
+  core.debug("<< pullRequestInfo");
 
   return { pullRequestNumber, commit };
 }
